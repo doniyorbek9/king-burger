@@ -6,7 +6,7 @@ from aiogram.types import Message
 from urllib.parse import unquote
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-ADMIN_ID = int(os.getenv("ADMIN_ID", "7948989650"))
+ADMIN_ID = int(os.getenv("ADMIN_ID") or "7948989650")
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
