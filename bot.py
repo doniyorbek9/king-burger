@@ -5,7 +5,7 @@ from aiogram.filters import CommandStart
 from aiogram.types import Message
 from urllib.parse import unquote
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+BOT_TOKEN = os.getenv("BOT_TOKEN") or "8817431816:AAEo_1VUwmuTfMYvgFVGE_yE-RBSujWORtM"
 ADMIN_ID = int(os.getenv("ADMIN_ID") or "7948989650")
 
 bot = Bot(token=BOT_TOKEN)
