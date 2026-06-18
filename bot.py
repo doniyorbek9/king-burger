@@ -1,8 +1,8 @@
 import asyncio
 import os
-from aiogram import Bot, Dispatcher, types
-from aiogram.filters import CommandStart
-from aiogram.types import Message
+from aiogram import Bot, Dispatcher, types, F
+from aiogram.filters import CommandStart, Command
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from urllib.parse import unquote
 
 BOT_TOKEN = os.getenv("BOT_TOKEN") or "8817431816:AAEo_1VUwmuTfMYvgFVGE_yE-RBSujWORtM"
@@ -12,12 +12,18 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
 
+def admin_keyboard(order_id: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text="✅ Qabul qildim", callback_data=f"accept:{order_id}"),
+        InlineKeyboardButton(text="❌ Bekor qilish", callback_data=f"cancel:{order_id}"),
+    ]])
+
+
 @dp.message(CommandStart())
 async def start_handler(message: Message, command: CommandStart):
     args = command.args
 
     if args and args.startswith("order"):
-        # Saytdan kelgan buyurtma
         try:
             order_text = unquote(args)
         except Exception:
@@ -35,10 +41,13 @@ async def start_handler(message: Message, command: CommandStart):
             f"📋 <b>Buyurtma:</b>\n{order_text}"
         )
 
-        # Adminga yuborish
-        await bot.send_message(ADMIN_ID, admin_msg, parse_mode="HTML")
+        await bot.send_message(
+            ADMIN_ID,
+            admin_msg,
+            parse_mode="HTML",
+            reply_markup=admin_keyboard(str(message.message_id))
+        )
 
-        # Foydalanuvchiga tasdiqlash
         await message.answer(
             "✅ <b>Buyurtmangiz qabul qilindi!</b>\n\n"
             "⏱ Tez orada siz bilan bog'lanamiz.\n"
@@ -46,7 +55,6 @@ async def start_handler(message: Message, command: CommandStart):
             parse_mode="HTML"
         )
     else:
-        # Oddiy /start
         await message.answer(
             "🍔 <b>King Burger botiga xush kelibsiz!</b>\n\n"
             "Buyurtma berish uchun saytimizga o'ting va mahsulotlarni tanlang.\n\n"
@@ -55,6 +63,20 @@ async def start_handler(message: Message, command: CommandStart):
             "🕐 Ish vaqti: <b>08:00 — 23:30</b>",
             parse_mode="HTML"
         )
+
+
+@dp.callback_query(F.data.startswith("accept:"))
+async def accept_order(callback: CallbackQuery):
+    await callback.message.edit_reply_markup(reply_markup=None)
+    await callback.message.reply("✅ <b>Buyurtma qabul qilindi!</b>", parse_mode="HTML")
+    await callback.answer("✅ Qabul qilindi!")
+
+
+@dp.callback_query(F.data.startswith("cancel:"))
+async def cancel_order(callback: CallbackQuery):
+    await callback.message.edit_reply_markup(reply_markup=None)
+    await callback.message.reply("❌ <b>Buyurtma bekor qilindi.</b>", parse_mode="HTML")
+    await callback.answer("❌ Bekor qilindi!")
 
 
 async def main():
