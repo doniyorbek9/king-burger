@@ -1,5 +1,6 @@
 import asyncio
 import os
+import aiohttp
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
@@ -7,9 +8,27 @@ from urllib.parse import unquote
 
 BOT_TOKEN = os.getenv("BOT_TOKEN") or "8817431816:AAEo_1VUwmuTfMYvgFVGE_yE-RBSujWORtM"
 ADMIN_ID = int(os.getenv("ADMIN_ID") or "7948989650")
+API_URL = os.getenv("API_URL") or "https://king-burger-api.up.railway.app"
+BOT_SECRET = os.getenv("BOT_SECRET") or ""
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
+
+
+async def update_order_status(order_id: str, status: str):
+    """Saytdagi buyurtma holatini backend orqali yangilaydi."""
+    url = f"{API_URL}/api/orders/{order_id}/status"
+    headers = {"Content-Type": "application/json"}
+    if BOT_SECRET:
+        headers["x-bot-secret"] = BOT_SECRET
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.patch(url, json={"status": status}, headers=headers) as resp:
+                if resp.status >= 400:
+                    text = await resp.text()
+                    print(f"Status yangilanmadi ({resp.status}): {text}")
+    except Exception as e:
+        print("Backendga ulanishda xatolik:", e)
 
 
 def admin_keyboard(order_id: str) -> InlineKeyboardMarkup:
@@ -67,6 +86,8 @@ async def start_handler(message: Message, command: CommandStart):
 
 @dp.callback_query(F.data.startswith("accept:"))
 async def accept_order(callback: CallbackQuery):
+    order_id = callback.data.split(":")[1]
+    await update_order_status(order_id, "qabul_qilindi")
     await callback.message.edit_reply_markup(reply_markup=None)
     await callback.message.reply("✅ <b>Buyurtma qabul qilindi!</b>", parse_mode="HTML")
     await callback.answer("✅ Qabul qilindi!")
@@ -74,6 +95,8 @@ async def accept_order(callback: CallbackQuery):
 
 @dp.callback_query(F.data.startswith("cancel:"))
 async def cancel_order(callback: CallbackQuery):
+    order_id = callback.data.split(":")[1]
+    await update_order_status(order_id, "bekor_qilindi")
     await callback.message.edit_reply_markup(reply_markup=None)
     await callback.message.reply("❌ <b>Buyurtma bekor qilindi.</b>", parse_mode="HTML")
     await callback.answer("❌ Bekor qilindi!")

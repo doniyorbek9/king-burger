@@ -13,5 +13,7 @@ Telegram bot for King Burger — saytdan kelgan buyurtmalarni qabul qiladi.
 |----------|-------|
 | `BOT_TOKEN` | `8817431816:AAEZcjifgPtSUbm-8scMeRhZHyQMsg_ViyY` |
 | `ADMIN_ID` | `7948989650` |
+| `API_URL` | King Burger backend manzili (masalan `https://king-burger-api.up.railway.app`) |
+| `BOT_SECRET` | Backenddagi `BOT_SECRET` bilan bir xil bo'lishi kerak |
 
 5. Deploy avtomatik boshlanadi ✅
